@@ -1,26 +1,15 @@
-#!/bin/sh
-set -e
+FROM node:20-alpine
 
-export IPFS_PATH=/data/ipfs
+WORKDIR /app
 
-# Init IPFS once
-if [ ! -f "$IPFS_PATH/config" ]; then
-  echo "📦 Initializing IPFS..."
-  ipfs init --profile server
-fi
+COPY package*.json ./
+RUN npm install --production
 
-# Expose API + Gateway to container
-ipfs config Addresses.API /ip4/0.0.0.0/tcp/5001
-ipfs config Addresses.Gateway /ip4/0.0.0.0/tcp/8080
+COPY . .
 
-echo "🚀 Starting IPFS daemon..."
-ipfs daemon --enable-gc &
+ENV NODE_ENV=production
+ENV PORT=3000
 
-# Wait for IPFS API
-until ipfs id >/dev/null 2>&1; do
-  echo "⏳ Waiting for IPFS..."
-  sleep 1
-done
+EXPOSE 3000
 
-echo "🚀 Starting Express server..."
-node index.js
+CMD ["node", "index.js"]
